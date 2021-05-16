@@ -3,15 +3,15 @@ import 'dart:async';
 
 import 'package:multi_image_picker/multi_image_picker.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(new MyApp());
 
 class MyApp extends StatefulWidget {
   @override
-  _MyAppState createState() => _MyAppState();
+  _MyAppState createState() => new _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  List<Asset> images = <Asset>[];
+  List<Asset> images = List<Asset>();
   String _error = 'No Error Dectected';
 
   @override
@@ -34,8 +34,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> loadAssets() async {
-    List<Asset> resultList = <Asset>[];
-    String error = 'No Error Detected';
+    List<Asset> resultList = List<Asset>();
+    String error = 'No Error Dectected';
 
     try {
       resultList = await MultiImagePicker.pickImages(
@@ -68,15 +68,15 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
+    return new MaterialApp(
+      home: new Scaffold(
+        appBar: new AppBar(
           title: const Text('Plugin example app'),
         ),
         body: Column(
           children: <Widget>[
             Center(child: Text('Error: $_error')),
-            ElevatedButton(
+            RaisedButton(
               child: Text("Pick images"),
               onPressed: loadAssets,
             ),

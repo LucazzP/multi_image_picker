@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/services.dart';
+import 'package:meta/meta.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:multi_image_picker/src/exceptions.dart';
 
@@ -33,13 +34,15 @@ class MultiImagePicker {
   /// penalty. How to request the original image or a thumb
   /// you can refer to the docs for the Asset class.
   static Future<List<Asset>> pickImages({
-    required int maxImages,
+    @required int maxImages,
     bool enableCamera = false,
     List<Asset> selectedAssets = const [],
     CupertinoOptions cupertinoOptions = const CupertinoOptions(),
     MaterialOptions materialOptions = const MaterialOptions(),
   }) async {
-    if (maxImages < 0) {
+    assert(maxImages != null);
+
+    if (maxImages != null && maxImages < 0) {
       throw new ArgumentError.value(maxImages, 'maxImages cannot be negative');
     }
 
@@ -58,8 +61,7 @@ class MultiImagePicker {
               .toList(),
         },
       );
-
-      var assets = <Asset>[];
+      var assets = List<Asset>();
       for (var item in images) {
         var asset = Asset(
           item['identifier'],
@@ -73,11 +75,7 @@ class MultiImagePicker {
     } on PlatformException catch (e) {
       switch (e.code) {
         case "CANCELLED":
-          throw NoImagesSelectedException(e.message!);
-        case "PERMISSION_DENIED":
-          throw PermissionDeniedException(e.message!);
-        case "PERMISSION_PERMANENTLY_DENIED":
-          throw PermissionPermanentlyDeniedExeption(e.message!);
+          throw NoImagesSelectedException(e.message);
         default:
           throw e;
       }
@@ -92,13 +90,17 @@ class MultiImagePicker {
   /// refer to [Asset] class docs.
   ///
   /// The actual image data is sent via BinaryChannel.
-  static Future<bool?> requestThumbnail(
-      String? identifier, int width, int height, int quality) async {
-    if (width < 0) {
+  static Future<bool> requestThumbnail(
+      String identifier, int width, int height, int quality) async {
+    assert(identifier != null);
+    assert(width != null);
+    assert(height != null);
+
+    if (width != null && width < 0) {
       throw new ArgumentError.value(width, 'width cannot be negative');
     }
 
-    if (height < 0) {
+    if (height != null && height < 0) {
       throw new ArgumentError.value(height, 'height cannot be negative');
     }
 
@@ -108,7 +110,7 @@ class MultiImagePicker {
     }
 
     try {
-      bool? ret = await _channel.invokeMethod(
+      bool ret = await _channel.invokeMethod(
           "requestThumbnail", <String, dynamic>{
         "identifier": identifier,
         "width": width,
@@ -119,11 +121,11 @@ class MultiImagePicker {
     } on PlatformException catch (e) {
       switch (e.code) {
         case "ASSET_DOES_NOT_EXIST":
-          throw AssetNotFoundException(e.message!);
+          throw AssetNotFoundException(e.message);
         case "PERMISSION_DENIED":
-          throw PermissionDeniedException(e.message!);
+          throw PermissionDeniedException(e.message);
         case "PERMISSION_PERMANENTLY_DENIED":
-          throw PermissionPermanentlyDeniedExeption(e.message!);
+          throw PermissionPermanentlyDeniedExeption(e.message);
         default:
           throw e;
       }
@@ -138,9 +140,9 @@ class MultiImagePicker {
   /// refer to [Asset] class docs.
   ///
   /// The actual image data is sent via BinaryChannel.
-  static Future<bool?> requestOriginal(String? identifier, quality) async {
+  static Future<bool> requestOriginal(String identifier, quality) async {
     try {
-      bool? ret =
+      bool ret =
           await _channel.invokeMethod("requestOriginal", <String, dynamic>{
         "identifier": identifier,
         "quality": quality,
@@ -149,7 +151,7 @@ class MultiImagePicker {
     } on PlatformException catch (e) {
       switch (e.code) {
         case "ASSET_DOES_NOT_EXIST":
-          throw AssetNotFoundException(e.message!);
+          throw AssetNotFoundException(e.message);
         default:
           throw e;
       }
@@ -157,26 +159,20 @@ class MultiImagePicker {
   }
 
   // Requests image metadata for a given [identifier]
-  static Future<Metadata> requestMetadata(String? identifier) async {
-    try {
-      dynamic value = await _channel.invokeMethod<FutureOr<Map<dynamic, dynamic>>>(
-        "requestMetadata",
-        <String, dynamic>{
-          "identifier": identifier
-        }
-      );
-      assert(value != null);
+  static Future<Metadata> requestMetadata(String identifier) async {
+    Map<dynamic, dynamic> map = await _channel.invokeMethod(
+      "requestMetadata",
+      <String, dynamic>{
+        "identifier": identifier,
+      },
+    );
 
-      Map<dynamic, dynamic> map = Map<dynamic, dynamic>.from(value);
-      Map<String, dynamic> metadata = Map<String, dynamic>.from(map);
-      if (Platform.isIOS) {
-        metadata = _normalizeMetadata(metadata);
-      }
-
-      return Metadata.fromMap(metadata);
-    } catch (e) {
-      throw e;
+    Map<String, dynamic> metadata = Map<String, dynamic>.from(map);
+    if (Platform.isIOS) {
+      metadata = _normalizeMetadata(metadata);
     }
+
+    return Metadata.fromMap(metadata);
   }
 
   /// Normalizes the meta data returned by iOS.
@@ -202,6 +198,6 @@ class MultiImagePicker {
       }
     });
 
-    return map as Map<String, dynamic>;
+    return map;
   }
 }
